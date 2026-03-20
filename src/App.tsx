@@ -17,6 +17,14 @@ import Applications from "./pages/Applications";
 import ApplicationDetail from "./pages/ApplicationDetail";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
+import JobSearch from "./pages/JobSearch";
+import JobDetail from "./pages/JobDetail";
+import SavedJobs from "./pages/SavedJobs";
+import ReviewQueue from "./pages/ReviewQueue";
+import ActivityLogs from "./pages/ActivityLogs";
+import Notifications from "./pages/Notifications";
+import AutomationSettings from "./pages/AutomationSettings";
+import AssistedApply from "./pages/AssistedApply";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +43,7 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/onboarding" element={<Onboarding />} />
+      {/* Phase 1 */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/master-resume" element={<ProtectedRoute><MasterResume /></ProtectedRoute>} />
       <Route path="/tailored-resumes" element={<ProtectedRoute><TailoredResumes /></ProtectedRoute>} />
@@ -44,6 +53,16 @@ function AppRoutes() {
       <Route path="/applications/:id" element={<ProtectedRoute><ApplicationDetail /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      {/* Phase 2 */}
+      <Route path="/jobs" element={<ProtectedRoute><JobSearch /></ProtectedRoute>} />
+      <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
+      <Route path="/saved-jobs" element={<ProtectedRoute><SavedJobs /></ProtectedRoute>} />
+      <Route path="/review-queue" element={<ProtectedRoute><ReviewQueue /></ProtectedRoute>} />
+      {/* Phase 3 */}
+      <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+      <Route path="/automation-settings" element={<ProtectedRoute><AutomationSettings /></ProtectedRoute>} />
+      <Route path="/assisted-apply/:id" element={<ProtectedRoute><AssistedApply /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -55,7 +74,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
             <AppProvider>
               <AppRoutes />

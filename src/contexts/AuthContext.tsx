@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { User, UserProfile, Preferences } from '@/types';
-import { seedProfile, seedPreferences } from '@/data/seed';
 
 interface AuthState {
   user: User | null;
@@ -21,16 +20,13 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('cf_user');
-    return saved ? JSON.parse(saved) : null;
+    try { const s = localStorage.getItem('cf_user'); return s ? JSON.parse(s) : null; } catch { return null; }
   });
   const [profile, setProfile] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('cf_profile');
-    return saved ? JSON.parse(saved) : null;
+    try { const s = localStorage.getItem('cf_profile'); return s ? JSON.parse(s) : null; } catch { return null; }
   });
   const [preferences, setPreferences] = useState<Preferences | null>(() => {
-    const saved = localStorage.getItem('cf_preferences');
-    return saved ? JSON.parse(saved) : null;
+    try { const s = localStorage.getItem('cf_preferences'); return s ? JSON.parse(s) : null; } catch { return null; }
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,14 +45,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     else localStorage.removeItem('cf_preferences');
   }, [preferences]);
 
+  // In production, replace with real API auth calls
   const login = useCallback(async (email: string, _password: string) => {
     setIsLoading(true);
     await new Promise(r => setTimeout(r, 800));
-    const u: User = { id: 'demo-user-001', email, name: email.split('@')[0], createdAt: new Date().toISOString() };
+    const u: User = { id: crypto.randomUUID(), email, name: email.split('@')[0], createdAt: new Date().toISOString() };
     setUser(u);
-    // Load demo data for demo account
-    setProfile(seedProfile);
-    setPreferences(seedPreferences);
+    // Check if profile already exists in storage (returning user)
+    const existingProfile = localStorage.getItem('cf_profile');
+    if (existingProfile) {
+      setProfile(JSON.parse(existingProfile));
+      const existingPrefs = localStorage.getItem('cf_preferences');
+      if (existingPrefs) setPreferences(JSON.parse(existingPrefs));
+    } else {
+      setProfile({ userId: u.id, fullName: u.name, email, onboardingCompleted: false });
+    }
     setIsLoading(false);
   }, []);
 
@@ -64,8 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     await new Promise(r => setTimeout(r, 800));
     const id = crypto.randomUUID();
-    const u: User = { id, email, name, createdAt: new Date().toISOString() };
-    setUser(u);
+    setUser({ id, email, name, createdAt: new Date().toISOString() });
     setProfile({ userId: id, fullName: name, email, onboardingCompleted: false });
     setIsLoading(false);
   }, []);

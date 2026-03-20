@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, FilePlus, Briefcase, FolderOpen, TrendingUp, Target, Clock, Award } from 'lucide-react';
+import { FileText, FilePlus, Briefcase, FolderOpen, Target, Clock, Award, Search, Bookmark, ClipboardList, Zap, Bell, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { ApplicationStatus } from '@/types';
 import { STATUS_LABELS } from '@/types';
@@ -23,19 +23,26 @@ export function StatusBadge({ status }: { status: ApplicationStatus }) {
 }
 
 export default function Dashboard() {
-  const { masterResume, tailoredResumes, applications, documents } = useApp();
+  const { masterResume, tailoredResumes, applications, documents, jobs, savedJobs, reviewQueue, notifications, packets, applyRuns, coverLetters, activityLogs } = useApp();
   const navigate = useNavigate();
-
-  const stats = [
-    { label: 'Master Resume', value: masterResume ? '1 Uploaded' : 'None', icon: FileText, color: 'text-primary' },
-    { label: 'Tailored Resumes', value: tailoredResumes.length, icon: FilePlus, color: 'text-emerald-500' },
-    { label: 'Applications', value: applications.length, icon: Briefcase, color: 'text-amber-500' },
-    { label: 'Documents', value: documents.length, icon: FolderOpen, color: 'text-indigo-500' },
-  ];
 
   const activeApps = applications.filter(a => ['applied', 'interview'].includes(a.status));
   const offerCount = applications.filter(a => a.status === 'offer').length;
   const avgATS = tailoredResumes.length > 0 ? Math.round(tailoredResumes.reduce((s, r) => s + r.atsScore, 0) / tailoredResumes.length) : 0;
+  const pendingReviews = reviewQueue.filter(r => r.status === 'pending').length;
+  const unreadNotifs = notifications.filter(n => !n.read).length;
+  const submittedToday = applyRuns.filter(r => r.status === 'submitted' && r.completedAt && new Date(r.completedAt).toDateString() === new Date().toDateString()).length;
+
+  const stats = [
+    { label: 'Jobs Tracked', value: jobs.length, icon: Search, color: 'text-primary', link: '/jobs' },
+    { label: 'Saved Jobs', value: savedJobs.filter(s => s.status === 'saved').length, icon: Bookmark, color: 'text-blue-500', link: '/saved-jobs' },
+    { label: 'Applications', value: applications.length, icon: Briefcase, color: 'text-amber-500', link: '/applications' },
+    { label: 'Tailored Resumes', value: tailoredResumes.length, icon: FilePlus, color: 'text-emerald-500', link: '/tailored-resumes' },
+    { label: 'Cover Letters', value: coverLetters.length, icon: FileText, color: 'text-indigo-500', link: '/documents' },
+    { label: 'Documents', value: documents.length, icon: FolderOpen, color: 'text-purple-500', link: '/documents' },
+    { label: 'Review Queue', value: pendingReviews, icon: ClipboardList, color: 'text-orange-500', link: '/review-queue' },
+    { label: 'Packets Ready', value: packets.filter(p => p.status === 'ready').length, icon: Zap, color: 'text-cyan-500', link: '/activity-logs' },
+  ];
 
   return (
     <DashboardLayout>
@@ -46,16 +53,16 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {stats.map(s => (
-            <Card key={s.label} className="border-border/50 hover:shadow-md transition-shadow">
-              <CardContent className="pt-6">
+            <Card key={s.label} className="border-border/50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(s.link)}>
+              <CardContent className="pt-5 pb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">{s.label}</p>
-                    <p className="text-2xl font-bold text-foreground mt-1">{s.value}</p>
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className="text-2xl font-bold text-foreground mt-0.5">{s.value}</p>
                   </div>
-                  <s.icon className={`h-8 w-8 ${s.color} opacity-80`} />
+                  <s.icon className={`h-7 w-7 ${s.color} opacity-80`} />
                 </div>
               </CardContent>
             </Card>
@@ -63,7 +70,7 @@ export default function Dashboard() {
         </div>
 
         {/* Insights Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card className="border-border/50">
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -71,7 +78,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Avg ATS Score</p>
-                <p className="text-xl font-bold text-foreground">{avgATS}%</p>
+                <p className="text-xl font-bold text-foreground">{avgATS || '—'}%</p>
               </div>
             </CardContent>
           </Card>
@@ -81,7 +88,7 @@ export default function Dashboard() {
                 <Clock className="h-6 w-6 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Applications</p>
+                <p className="text-sm text-muted-foreground">Active Apps</p>
                 <p className="text-xl font-bold text-foreground">{activeApps.length}</p>
               </div>
             </CardContent>
@@ -97,7 +104,31 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+          <Card className="border-border/50">
+            <CardContent className="pt-6 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-cyan-500/10 flex items-center justify-center">
+                <Zap className="h-6 w-6 text-cyan-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Submitted Today</p>
+                <p className="text-xl font-bold text-foreground">{submittedToday}</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Quick Actions */}
+        <Card className="border-border/50">
+          <CardHeader><CardTitle className="text-lg">Quick Actions</CardTitle></CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate('/jobs')}><Search className="h-4 w-4 mr-1" /> Search Jobs</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/tailored-resumes/new')}><FilePlus className="h-4 w-4 mr-1" /> Create Resume</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/applications')}><Briefcase className="h-4 w-4 mr-1" /> Applications</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/review-queue')}><ClipboardList className="h-4 w-4 mr-1" /> Review Queue {pendingReviews > 0 && `(${pendingReviews})`}</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/automation-settings')}><Zap className="h-4 w-4 mr-1" /> Automation</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}><Bell className="h-4 w-4 mr-1" /> Notifications {unreadNotifs > 0 && `(${unreadNotifs})`}</Button>
+          </CardContent>
+        </Card>
 
         {/* Recent sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -111,7 +142,6 @@ export default function Dashboard() {
                 <div className="text-center py-8 text-muted-foreground">
                   <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-40" />
                   <p>No applications yet</p>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate('/applications')}>Track Your First Application</Button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -131,27 +161,22 @@ export default function Dashboard() {
 
           <Card className="border-border/50">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Recent Tailored Resumes</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/tailored-resumes')}>View All</Button>
+              <CardTitle className="text-lg">Recent Activity</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/activity-logs')}>View All</Button>
             </CardHeader>
             <CardContent>
-              {tailoredResumes.length === 0 ? (
+              {activityLogs.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <FilePlus className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p>No tailored resumes yet</p>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate('/tailored-resumes')}>Create Your First</Button>
+                  <Activity className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p>No activity yet</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {tailoredResumes.slice(0, 5).map(r => (
-                    <div key={r.id} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate(`/resume-preview/${r.id}`)}>
-                      <div className="min-w-0">
-                        <p className="font-medium text-foreground truncate">{r.targetJobTitle}</p>
-                        <p className="text-sm text-muted-foreground">v{r.version}</p>
-                      </div>
-                      <Badge className={`border-0 font-medium ${r.atsScore >= 85 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : r.atsScore >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        ATS {r.atsScore}%
-                      </Badge>
+                  {activityLogs.slice(0, 5).map(log => (
+                    <div key={log.id} className="py-2 px-3 rounded-lg">
+                      <p className="text-sm font-medium text-foreground">{log.action}</p>
+                      <p className="text-xs text-muted-foreground truncate">{log.message}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(log.timestamp).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>

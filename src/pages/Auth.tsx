@@ -11,8 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function Auth() {
   const { login, signup, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [loginEmail, setLoginEmail] = useState('alexandra.chen@email.com');
-  const [loginPassword, setLoginPassword] = useState('demo123');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
@@ -95,7 +95,7 @@ export default function Auth() {
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
                     Sign In
                   </Button>
-                  <p className="text-xs text-center text-muted-foreground">Demo: Use pre-filled credentials to explore</p>
+
                 </form>
               </TabsContent>
 

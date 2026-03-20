@@ -36,8 +36,9 @@ export default function Onboarding() {
   const [exKeywordInput, setExKeywordInput] = useState('');
 
   const addTag = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, input: string, setInput: React.Dispatch<React.SetStateAction<string>>) => {
-    if (input.trim() && !list.includes(input.trim())) {
-      setList([...list, input.trim()]);
+    const tags = input.split(/[,;]+/).map(s => s.trim()).filter(s => s && !list.includes(s));
+    if (tags.length > 0) {
+      setList([...list, ...tags]);
       setInput('');
     }
   };
@@ -46,25 +47,49 @@ export default function Onboarding() {
     setList(list.filter(i => i !== item));
   };
 
-  const TagInput = ({ label, list, setList, input, setInput, placeholder }: { label: string; list: string[]; setList: React.Dispatch<React.SetStateAction<string[]>>; input: string; setInput: React.Dispatch<React.SetStateAction<string>>; placeholder: string }) => (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
-        <Input value={input} onChange={e => setInput(e.target.value)} placeholder={placeholder}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(list, setList, input, setInput); } }} />
-        <Button type="button" variant="secondary" size="sm" onClick={() => addTag(list, setList, input, setInput)}>Add</Button>
-      </div>
-      {list.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-2">
+  const TagInput = ({ label, list, setList, input, setInput, placeholder }: { label: string; list: string[]; setList: React.Dispatch<React.SetStateAction<string[]>>; input: string; setInput: React.Dispatch<React.SetStateAction<string>>; placeholder: string }) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      // Auto-add when user types a comma or semicolon
+      if (val.includes(',') || val.includes(';')) {
+        addTag(list, setList, val, setInput);
+      } else {
+        setInput(val);
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        addTag(list, setList, input, setInput);
+      }
+      if (e.key === 'Backspace' && !input && list.length > 0) {
+        setList(list.slice(0, -1));
+      }
+    };
+
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <div className="flex flex-wrap items-center gap-1.5 p-2 border rounded-md border-input bg-background min-h-[40px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
           {list.map(item => (
-            <Badge key={item} variant="secondary" className="cursor-pointer hover:bg-destructive/20" onClick={() => removeTag(list, setList, item)}>
+            <Badge key={item} variant="secondary" className="cursor-pointer hover:bg-destructive/20 shrink-0" onClick={() => removeTag(list, setList, item)}>
               {item} ×
             </Badge>
           ))}
+          <input
+            value={input}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onBlur={() => { if (input.trim()) addTag(list, setList, input, setInput); }}
+            placeholder={list.length === 0 ? placeholder : ''}
+            className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
+          />
         </div>
-      )}
-    </div>
-  );
+        <p className="text-xs text-muted-foreground">Type and press Enter, Tab, or comma to add</p>
+      </div>
+    );
+  };
 
   const handleFinish = () => {
     completeOnboarding({
