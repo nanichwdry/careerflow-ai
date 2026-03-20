@@ -14,7 +14,7 @@ export function useGmailSync() {
 
   /** Core sync: fetch emails → AI parse → store */
   const runSync = useCallback(async (token: string): Promise<number> => {
-    const rawEmails = await fetchJobEmails(token, 20);
+    const rawEmails = await fetchJobEmails(token, 30);
     if (!rawEmails.length) return 0;
 
     const results = await Promise.allSettled(

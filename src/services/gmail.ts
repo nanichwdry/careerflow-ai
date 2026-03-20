@@ -10,12 +10,26 @@ const GMAIL_API = 'https://www.googleapis.com/gmail/v1/users/me';
 const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
 const TOKEN_EXPIRY_KEY = 'cf_gmail_token_expiry';
 
-// Job-related Gmail search — promotions, last 30 days
+// Job-related Gmail search — inbox + promotions + updates, last 60 days
+// Covers: Indeed, Monster, Jobat, LinkedIn, Glassdoor, recruiters, job alerts
 const JOB_QUERY =
-  'in:promotions newer_than:30d ' +
-  '(subject:job OR subject:hiring OR subject:"job opportunity" OR ' +
-  'subject:position OR subject:career OR subject:recruiting OR ' +
-  'subject:opportunity OR subject:opening OR subject:application)';
+  'newer_than:60d ' +
+  '(' +
+    // Known job-board senders
+    'from:indeed.com OR from:jobalerts.indeed.com OR ' +
+    'from:monster.com OR from:jobat.be OR from:jobat.com OR ' +
+    'from:linkedin.com OR from:glassdoor.com OR from:ziprecruiter.com OR ' +
+    'from:dice.com OR from:careerbuilder.com OR from:simplyhired.com OR ' +
+    'from:talent.com OR from:jooble.org OR from:snagajob.com OR ' +
+    // Subject-based fallback for recruiter emails
+    'subject:"job alert" OR subject:"jobs alert" OR ' +
+    'subject:"new jobs" OR subject:"jobs matching" OR ' +
+    'subject:"job opportunity" OR subject:"job opening" OR ' +
+    'subject:"hiring" OR subject:"we\'re hiring" OR ' +
+    'subject:"recruiter" OR subject:"job recommendation" OR ' +
+    'subject:"career opportunity" OR subject:"position available" OR ' +
+    'subject:"apply now" OR subject:"job match"' +
+  ')';
 
 // In-memory token (never persisted to localStorage for security)
 let _accessToken: string | null = null;
@@ -167,7 +181,7 @@ export interface RawEmail {
  * @param token  Valid OAuth2 access token
  * @param max    Max messages to fetch (default 15)
  */
-export async function fetchJobEmails(token: string, max = 15): Promise<RawEmail[]> {
+export async function fetchJobEmails(token: string, max = 30): Promise<RawEmail[]> {
   const q = encodeURIComponent(JOB_QUERY);
   const listData = await gmailGet(`/messages?q=${q}&maxResults=${max}`, token);
   if (!listData.messages?.length) return [];
