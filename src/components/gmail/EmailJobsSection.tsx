@@ -1,18 +1,20 @@
-import { Mail, Inbox } from 'lucide-react';
+import { useState } from 'react';
+import { Mail, Inbox, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import { GmailConnectButton } from './GmailConnectButton';
 import { EmailJobCard } from './EmailJobCard';
 
-const MAX_VISIBLE = 6;
+const PAGE_SIZE = 6;
 
 export function EmailJobsSection() {
   const { emailJobs, gmail } = useApp();
+  const [showAll, setShowAll] = useState(false);
 
   const visible = emailJobs.filter(j => !j.dismissed);
-  const shown = visible.slice(0, MAX_VISIBLE);
-  const hiddenCount = Math.max(0, visible.length - MAX_VISIBLE);
+  const shown = showAll ? visible : visible.slice(0, PAGE_SIZE);
+  const hiddenCount = Math.max(0, visible.length - PAGE_SIZE);
 
   // Not connected — show connect prompt
   if (!gmail.connected) {
@@ -25,7 +27,7 @@ export function EmailJobsSection() {
           <div className="flex-1 text-center sm:text-left">
             <p className="font-semibold text-foreground">Import jobs from Gmail</p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Connect your Gmail to automatically pull job postings from your Promotions inbox.
+              Connect your Gmail to automatically pull job postings from Indeed, Monster, recruiters and more.
             </p>
           </div>
           <GmailConnectButton />
@@ -34,7 +36,6 @@ export function EmailJobsSection() {
     );
   }
 
-  // Connected — show jobs or empty state
   return (
     <Card className="border-border/50">
       <CardHeader>
@@ -52,12 +53,12 @@ export function EmailJobsSection() {
         </div>
       </CardHeader>
       <CardContent>
-        {shown.length === 0 ? (
+        {visible.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Inbox className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No job emails found in the last 30 days.</p>
+            <p className="text-sm">No job emails found in the last 60 days.</p>
             <p className="text-xs mt-1 opacity-70">
-              Try syncing again or check your Gmail Promotions tab.
+              Try syncing again or check your Gmail for Indeed / Monster / recruiter emails.
             </p>
           </div>
         ) : (
@@ -67,10 +68,22 @@ export function EmailJobsSection() {
                 <EmailJobCard key={job.id} job={job} />
               ))}
             </div>
+
             {hiddenCount > 0 && (
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                +{hiddenCount} more dismissed or saved
-              </p>
+              <div className="mt-4 text-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setShowAll(v => !v)}
+                >
+                  {showAll ? (
+                    <><ChevronUp className="h-4 w-4" /> Show less</>
+                  ) : (
+                    <><ChevronDown className="h-4 w-4" /> Show all {visible.length} jobs (+{hiddenCount} more)</>
+                  )}
+                </Button>
+              </div>
             )}
           </>
         )}

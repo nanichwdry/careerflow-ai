@@ -1,4 +1,4 @@
-import { MapPin, ExternalLink, Bookmark, X, DollarSign, Building2, Check } from 'lucide-react';
+import { MapPin, ExternalLink, Bookmark, X, DollarSign, Building2, Check, Mail } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,11 @@ const arrangementLabel: Record<EmailJob['workArrangement'], string> = {
   unknown: 'On-site',
 };
 
+/** Open the Gmail email directly in a new tab */
+function openEmail(emailId: string) {
+  window.open(`https://mail.google.com/mail/u/0/#all/${emailId}`, '_blank', 'noopener,noreferrer');
+}
+
 interface Props {
   job: EmailJob;
 }
@@ -28,7 +33,8 @@ interface Props {
 export function EmailJobCard({ job }: Props) {
   const { addJob, markEmailJobSaved, dismissEmailJob } = useApp();
 
-  const handleSave = () => {
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const trackerJob: Job = {
       id: crypto.randomUUID(),
       sourceId: 'gmail',
@@ -51,8 +57,25 @@ export function EmailJobCard({ job }: Props) {
     toast.success('Saved to Job Tracker');
   };
 
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dismissEmailJob(job.id);
+  };
+
+  // Clicking the card opens the apply URL if available, otherwise opens the Gmail email
+  const handleCardClick = () => {
+    if (job.applyUrl) {
+      window.open(job.applyUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      openEmail(job.emailId);
+    }
+  };
+
   return (
-    <Card className="border-border/50 hover:shadow-md transition-shadow">
+    <Card
+      className="border-border/50 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
+      onClick={handleCardClick}
+    >
       <CardContent className="pt-4 pb-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
@@ -68,7 +91,7 @@ export function EmailJobCard({ job }: Props) {
           <Button
             variant="ghost" size="icon"
             className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground -mt-0.5"
-            onClick={() => dismissEmailJob(job.id)}
+            onClick={handleDismiss}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -95,7 +118,7 @@ export function EmailJobCard({ job }: Props) {
         <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{job.snippet}</p>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
           {job.savedToTracker ? (
             <Badge variant="secondary" className="text-xs gap-1 font-normal">
               <Check className="h-3 w-3" /> Saved
@@ -105,13 +128,21 @@ export function EmailJobCard({ job }: Props) {
               <Bookmark className="h-3 w-3" /> Save
             </Button>
           )}
-          {job.applyUrl && (
-            <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="ghost" className="h-7 text-xs gap-1">
-                <ExternalLink className="h-3 w-3" /> Apply
-              </Button>
-            </a>
-          )}
+
+          {/* Always show open button — apply URL or Gmail email */}
+          <Button
+            size="sm" variant="ghost" className="h-7 text-xs gap-1"
+            onClick={() => job.applyUrl
+              ? window.open(job.applyUrl, '_blank', 'noopener,noreferrer')
+              : openEmail(job.emailId)
+            }
+          >
+            {job.applyUrl
+              ? <><ExternalLink className="h-3 w-3" /> Apply</>
+              : <><Mail className="h-3 w-3" /> View Email</>
+            }
+          </Button>
+
           <span className="ml-auto text-xs text-muted-foreground">
             {new Date(job.receivedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
           </span>
