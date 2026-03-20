@@ -1,5 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { EmailJobsSection } from '@/components/gmail/EmailJobsSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Gmail Jobs */}
+        <EmailJobsSection />
 
         {/* Quick Actions */}
         <Card className="border-border/50">

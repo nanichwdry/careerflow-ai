@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/adzuna-api/:path*",
+      "destination": "https://api.adzuna.com/:path*"
+    },
+    {
+      "source": "/((?!adzuna-api).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
